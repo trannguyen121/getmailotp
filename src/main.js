@@ -36,38 +36,98 @@ app.use(express.urlencoded({ extended: true }));
 
 // Hàm đọc danh sách email đã tạo
 function readMailResults() {
-  if (!fs.existsSync(emailFilePath)) return [];
-  const data = fs.readFileSync(emailFilePath, 'utf-8');
-  const seenEmails = new Set();
-  return data
-    .trim()
-    .split('\n')
-    .filter((line) => line && line.includes(',')) // Bỏ qua các dòng không hợp lệ
-    .map((line) => {
-      const [email, password] = line.split(',');
-      return { email: email.trim(), password: password.trim() };
-    })
-    .filter((entry) => {
-      if (seenEmails.has(entry.email)) return false;
-      seenEmails.add(entry.email);
-      return true;
-    });
+  if (!fs.existsSync(emailFilePath)) {
+    console.warn(`File không tồn tại: ${emailFilePath}`);
+    return [];
+  }
+
+  try {
+    const data = fs.readFileSync(emailFilePath, 'utf-8');
+    const seenEmails = new Set();
+
+    return data
+      .trim()
+      .split('\n')
+      .map((line, index) => {
+        const parts = line.split(',');
+
+        // Kiểm tra định dạng dòng
+        if (parts.length !== 2) {
+          console.warn(`Dòng không hợp lệ (dòng ${index + 1}): "${line}"`);
+          return null; // Bỏ qua dòng không hợp lệ
+        }
+
+        const email = parts[0]?.trim();
+        const password = parts[1]?.trim();
+
+        // Kiểm tra giá trị rỗng
+        if (!email || !password) {
+          console.warn(`Thiếu email hoặc password (dòng ${index + 1}): "${line}"`);
+          return null; // Bỏ qua dòng không hợp lệ
+        }
+
+        return { email, password };
+      })
+      .filter(Boolean) // Loại bỏ các dòng null (không hợp lệ)
+      .filter((entry) => {
+        if (seenEmails.has(entry.email)) {
+          console.warn(`Email trùng lặp: ${entry.email}`);
+          return false; // Loại bỏ email trùng lặp
+        }
+        seenEmails.add(entry.email);
+        return true;
+      });
+
+  } catch (error) {
+    console.error(`Lỗi khi đọc file: ${error.message}`);
+    return [];
+  }
 }
+
 
 // Hàm đọc danh sách OTP
 function readOtpResults() {
-  if (!fs.existsSync(otpFilePath)) return {};
-  const data = fs.readFileSync(otpFilePath, 'utf-8');
-  const otpMap = {};
-  data
-    .trim()
-    .split('\n')
-    .forEach((line) => {
-      const [email, otp] = line.replace('Email: ', '').split(', OTP: ');
-      otpMap[email.trim()] = otp.trim();
-    });
-  return otpMap;
+  if (!fs.existsSync(otpFilePath)) {
+    console.warn(`File không tồn tại: ${otpFilePath}`);
+    return {};
+  }
+
+  try {
+    const data = fs.readFileSync(otpFilePath, 'utf-8');
+    const otpMap = {};
+
+    data
+      .trim()
+      .split('\n')
+      .forEach((line, index) => {
+        const cleanedLine = line.replace('Email: ', '').trim();
+        const parts = cleanedLine.split(', OTP: ');
+
+        // Kiểm tra định dạng dòng
+        if (parts.length !== 2) {
+          console.warn(`Dòng không hợp lệ (dòng ${index + 1}): "${line}"`);
+          return; // Bỏ qua dòng không hợp lệ
+        }
+
+        const email = parts[0]?.trim();
+        const otp = parts[1]?.trim();
+
+        // Kiểm tra giá trị rỗng
+        if (!email || !otp) {
+          console.warn(`Thiếu email hoặc OTP (dòng ${index + 1}): "${line}"`);
+          return; // Bỏ qua dòng không hợp lệ
+        }
+
+        otpMap[email] = otp; // Lưu vào bản đồ OTP
+      });
+
+    return otpMap;
+  } catch (error) {
+    console.error(`Lỗi khi đọc file: ${error.message}`);
+    return {};
+  }
 }
+
 
 // Giao diện chính
 app.get('/', (req, res) => {

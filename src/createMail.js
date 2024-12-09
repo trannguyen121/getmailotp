@@ -6,7 +6,7 @@ const path = require('path');
 
 // Cấu hình thông tin Mailcow API (từ .env để bảo mật)
 const MAILCOW_API_URL = process.env.MAILCOW_API_URL || "https://mail.myngyemail.com/api/v1/add/mailbox";
-const MAILCOW_API_KEY = process.env.MAILCOW_API_KEY || "0170E8-1A6D2B-5C0ADC-42FD46-6EC886"; // Thay bằng giá trị thật hoặc sử dụng từ .env
+const MAILCOW_API_KEY = process.env.MAILCOW_API_KEY || "76457B-4124F7-8B60B4-EA0651-61EE0C"; // Thay bằng giá trị thật hoặc sử dụng từ .env
 
 // Function để random user và password
 function generateRandomUserAndPass() {
