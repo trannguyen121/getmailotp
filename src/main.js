@@ -83,20 +83,25 @@ app.get('/', (req, res) => {
   const otps = readOtpResults();
 
   const emailListHtml = emails.length
-    ? emails
+    ? `
+      <li class="list-group-item">
+        <input type="checkbox" id="select-all-checkbox">
+        <label for="select-all-checkbox" class="ms-2 fw-bold">Chọn tất cả</label>
+      </li>
+      ${emails
         .map(
           (entry, index) => `
-        <li class="list-group-item d-flex justify-content-between align-items-start">
-          <div>
-            <input type="checkbox" class="email-checkbox" data-email="${entry.email}" id="email-${index}">
-            <label for="email-${index}">${entry.email} - Password: ${entry.password}</label>
-          </div>
-          <span class="badge bg-${otps[entry.email] ? 'success' : 'secondary'}">
-            ${otps[entry.email] || 'Chưa có OTP'}
-          </span>
-        </li>`
+          <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2">
+              <input type="checkbox" class="email-checkbox" data-email="${entry.email}" id="email-${index}">
+              <label for="email-${index}">${entry.email} - Password: ${entry.password}</label>
+            </div>
+            <span class="badge bg-${otps[entry.email] ? 'success' : 'secondary'}">
+              ${otps[entry.email] || 'Chưa có OTP'}
+            </span>
+          </li>`
         )
-        .join('')
+        .join('')}`
     : '<li class="list-group-item">Chưa có email nào được tạo.</li>';
 
   res.send(`<!DOCTYPE html>
@@ -108,6 +113,13 @@ app.get('/', (req, res) => {
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     </head>
+          <header class="mt-5 text-center">
+        <p>Theo dõi tại fb: 
+          <a href="https://www.facebook.com/dnguyen2077" target="_blank">
+            Trần Nguyễn Đại Nguyên
+          </a>
+        </p>
+      </header>
     <body class="container mt-5">
       <h2 class="mb-4">Quản lý Mailbox</h2>
       <form id="create-mailbox-form">
@@ -121,6 +133,10 @@ app.get('/', (req, res) => {
       <button id="delete-mails-btn" class="btn btn-danger mt-3">Xóa Email đã chọn</button>
       <h3 class="mt-5">Danh sách email đã tạo:</h3>
       <ul class="list-group">${emailListHtml}</ul>
+
+      <!-- Footer với liên kết Facebook -->
+
+
       <script>
         $('#create-mailbox-form').on('submit', function (e) {
           e.preventDefault();
@@ -154,10 +170,17 @@ app.get('/', (req, res) => {
             else alert(data.message || 'Không thể xóa email.');
           });
         });
+
+        // Chọn tất cả email
+        $(document).on('change', '#select-all-checkbox', function () {
+          const isChecked = $(this).is(':checked');
+          $('.email-checkbox').prop('checked', isChecked);
+        });
       </script>
     </body>
     </html>`);
 });
+
 
 // Endpoint tạo email
 app.post('/create-mails', async (req, res) => {
